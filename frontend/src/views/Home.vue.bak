@@ -1,0 +1,354 @@
+<template>
+  <div class="home-container">
+    <el-container>
+      <!-- 顶部导航 -->
+      <el-header class="header">
+        <div class="header-left">
+          <el-icon :size="30" color="#409eff">
+            <Folder />
+          </el-icon>
+          <span class="header-title">安全云盘</span>
+        </div>
+        <div class="header-right">
+          <el-dropdown @command="handleCommand">
+            <span class="user-dropdown">
+              <el-icon><User /></el-icon>
+              {{ userStore.userInfo.username }}
+              <el-tag
+                v-if="userStore.isVip"
+                type="warning"
+                size="small"
+                style="margin-left: 10px"
+              >
+                VIP
+              </el-tag>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="profile">
+                  <el-icon><User /></el-icon>
+                  个人中心
+                </el-dropdown-item>
+                <el-dropdown-item command="logout" divided>
+                  <el-icon><SwitchButton /></el-icon>
+                  退出登录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </el-header>
+
+      <!-- 主体内容 -->
+      <el-main class="main">
+        <el-card class="welcome-card">
+          <template #header>
+            <div class="card-header">
+              <span>欢迎使用安全云盘系统</span>
+            </div>
+          </template>
+
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="用户名">
+              {{ userStore.userInfo.username }}
+            </el-descriptions-item>
+            <el-descriptions-item label="邮箱">
+              {{ userStore.userInfo.email }}
+            </el-descriptions-item>
+            <el-descriptions-item label="用户类型">
+              <el-tag v-if="userStore.isVip" type="warning">VIP会员</el-tag>
+              <el-tag v-else>普通用户</el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="存储配额">
+              {{ formatBytes(userStore.userInfo.storageQuota) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="已使用空间">
+              {{ formatBytes(userStore.userInfo.storageUsed) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="使用率">
+              {{ userStore.storageUsageRate }}%
+            </el-descriptions-item>
+          </el-descriptions>
+
+          <div class="storage-progress">
+            <el-progress
+              :percentage="parseFloat(userStore.storageUsageRate)"
+              :color="getProgressColor"
+            />
+          </div>
+
+          <div class="upload-section" style="margin-top: 30px">
+            <el-divider content-position="left">文件上传</el-divider>
+
+            <el-upload
+              ref="uploadRef"
+              class="upload-demo"
+              drag
+              :action="uploadAction"
+              :http-request="customUpload"
+              :on-progress="handleProgress"
+              :on-success="handleSuccess"
+              :on-error="handleError"
+              :before-upload="beforeUpload"
+              :show-file-list="false"
+              multiple
+            >
+              <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+              <div class="el-upload__text">
+                拖拽文件到此处或 <em>点击上传</em>
+              </div>
+              <template #tip>
+                <div class="el-upload__tip">
+                  支持多文件上传，单个文件最大500MB
+                </div>
+              </template>
+            </el-upload>
+
+            <div v-if="uploadingFiles.length > 0" class="upload-list">
+              <el-divider content-position="left">上传进度</el-divider>
+              <div
+                v-for="file in uploadingFiles"
+                :key="file.uid"
+                class="upload-item"
+              >
+                <div class="upload-item-info">
+                  <el-icon><Document /></el-icon>
+                  <span class="file-name">{{ file.name }}</span>
+                  <span class="file-size">{{ formatBytes(file.size) }}</span>
+                </div>
+                <el-progress
+                  :percentage="file.percentage"
+                  :status="file.status"
+                />
+              </div>
+            </div>
+          </div>
+        </el-card>
+      </el-main>
+    </el-container>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessageBox, ElMessage } from 'element-plus'
+import { Folder, User, SwitchButton, UploadFilled, Document } from '@element-plus/icons-vue'
+import { useUserStore } from '@/store/user'
+import { uploadFile } from '@/api/file'
+
+const router = useRouter()
+const userStore = useUserStore()
+
+const uploadRef = ref()
+const uploadingFiles = ref([])
+
+const uploadAction = import.meta.env.VITE_API_BASE_URL || '/api/file/upload'
+
+// 格式化字节数
+const formatBytes = (bytes) => {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i]
+}
+
+// 根据使用率返回进度条颜色
+const getProgressColor = (percentage) => {
+  if (percentage < 50) return '#67c23a'
+  if (percentage < 80) return '#e6a23c'
+  return '#f56c6c'
+}
+
+const beforeUpload = (file) => {
+  const maxSize = userStore.isVip ? 10 * 1024 * 1024 * 1024 : 500 * 1024 * 1024
+  if (file.size > maxSize) {
+    ElMessage.error(`文件大小不能超过${userStore.isVip ? '10GB' : '500MB'}`)
+    return false
+  }
+
+  const remainingSpace = userStore.userInfo.storageQuota - userStore.userInfo.storageUsed
+  if (file.size > remainingSpace) {
+    ElMessage.error('存储空间不足，请清理文件或升级VIP')
+    return false
+  }
+
+  uploadingFiles.value.push({
+    uid: file.uid,
+    name: file.name,
+    size: file.size,
+    percentage: 0,
+    status: ''
+  })
+
+  return true
+}
+
+const customUpload = async (options) => {
+  const { file } = options
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('parentId', 0)
+  formData.append('filePath', '/')
+  formData.append('masterKey', userStore.masterKey)
+
+  try {
+    const res = await uploadFile(formData, (percentage) => {
+      const uploadingFile = uploadingFiles.value.find(f => f.uid === file.uid)
+      if (uploadingFile) {
+        uploadingFile.percentage = percentage
+      }
+    })
+
+    const uploadingFile = uploadingFiles.value.find(f => f.uid === file.uid)
+    if (uploadingFile) {
+      uploadingFile.percentage = 100
+      uploadingFile.status = 'success'
+    }
+
+    if (res.code === 200) {
+      const message = res.data.isInstantUpload ? '秒传成功' : '上传成功'
+      ElMessage.success(message)
+
+      userStore.userInfo.storageUsed += res.data.fileSize
+      userStore.updateUserInfo(userStore.userInfo)
+
+      setTimeout(() => {
+        const index = uploadingFiles.value.findIndex(f => f.uid === file.uid)
+        if (index > -1) {
+          uploadingFiles.value.splice(index, 1)
+        }
+      }, 2000)
+    }
+  } catch (error) {
+    const uploadingFile = uploadingFiles.value.find(f => f.uid === file.uid)
+    if (uploadingFile) {
+      uploadingFile.status = 'exception'
+    }
+    ElMessage.error('上传失败: ' + (error.message || '请重试'))
+  }
+}
+
+const handleProgress = () => {}
+const handleSuccess = () => {}
+const handleError = () => {}
+
+
+// 下拉菜单命令处理
+const handleCommand = (command) => {
+  if (command === 'logout') {
+    ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+      .then(() => {
+        userStore.logout()
+        ElMessage.success('已退出登录')
+      })
+      .catch(() => {})
+  } else if (command === 'profile') {
+    ElMessage.info('个人中心功能开发中')
+  }
+}
+</script>
+
+<style scoped>
+.home-container {
+  min-height: 100vh;
+  background-color: #f5f7fa;
+}
+
+.header {
+  background: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #303133;
+}
+
+.user-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 5px 15px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.user-dropdown:hover {
+  background-color: #f5f7fa;
+}
+
+.main {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.welcome-card {
+  margin-top: 20px;
+}
+
+.card-header {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.storage-progress {
+  margin-top: 20px;
+}
+
+.upload-section {
+  margin-top: 30px;
+}
+
+.upload-demo {
+  width: 100%;
+}
+
+.upload-list {
+  margin-top: 20px;
+}
+
+.upload-item {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.upload-item-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.file-name {
+  flex: 1;
+  font-weight: 500;
+  color: #303133;
+}
+
+.file-size {
+  color: #909399;
+  font-size: 12px;
+}
+
+</style>

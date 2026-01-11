@@ -1,0 +1,106 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: secure-cloud-disk
+
+  # 数据源配置
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/secure_cloud_disk?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    druid:
+      initial-size: 5
+      min-idle: 5
+      max-active: 20
+      max-wait: 60000
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+
+  # 邮件配置
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: 599978009@qq.com  
+    password: yvnwtrvfxufxbcfd     
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+    default-encoding: UTF-8
+
+  # 文件上传配置
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 2048MB
+      max-request-size: 2048MB
+
+# MyBatis Plus 配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.clouddisk.entity
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# JWT 配置
+jwt:
+  secret: SecureCloudDisk2024MasterSecretKeyForJWTEncryption1234567890  # 至少256位
+  expiration: 604800000  # 7天（毫秒）
+  header: Authorization
+  token-prefix: Bearer
+
+# 业务配置
+business:
+  # 验证码配置
+  verification-code:
+    length: 6
+    expire-minutes: 5
+  # 用户默认配额
+  storage:
+    normal-quota: 5368709120   # 5GB
+    vip-quota: 53687091200     # 50GB
+  # 上传限制
+  upload:
+    normal-max-size: 524288000      # 500MB
+    vip-max-size: 2147483648       # 2GB
+    normal-speed-limit: 5242880     # 5MB/s
+  # 分享限制
+  share:
+    base-url: http://localhost:3000/share/
+    normal-max-days: 7
+    vip-max-days: -1                # -1表示无限制
+  # 回收站配置
+  recycle-bin:
+    auto-clean-days: 30             # 回收站文件保留天数，超过自动永久删除
+
+# MinIO 配置
+minio:
+  endpoint: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket-name: cloud-disk
+
+# 日志配置
+logging:
+  level:
+    com.clouddisk: debug
+    com.clouddisk.mapper: debug
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n'

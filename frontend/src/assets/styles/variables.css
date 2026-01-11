@@ -1,0 +1,123 @@
+:root {
+  /* 主色 - 哔哩粉系列 */
+  --primary-color: #FB7299;        /* 主粉色（按钮、强调元素） */
+  --primary-light: #FFA9C1;        /* 浅粉色（hover状态、背景） */
+  --primary-lighter: #FFE5EE;      /* 极浅粉（卡片背景、区域高亮） */
+  --primary-dark: #E85D85;         /* 深粉色（active状态） */
+
+  /* 辅助色 - 天依蓝（可选装饰色） */
+  --accent-blue: #00A1D6;          /* VIP、特殊标识 */
+  --accent-blue-light: #E3F5FF;    /* 蓝色背景 */
+
+  /* 背景色系 */
+  --bg-white: #FFFFFF;             /* 纯白背景 */
+  --bg-gray-50: #FAFAFA;           /* 极浅灰（页面底色） */
+  --bg-gray-100: #F5F5F5;          /* 浅灰（卡片、输入框） */
+  --bg-gray-200: #EEEEEE;          /* 中浅灰（分割线、禁用） */
+
+  /* 文字色系 */
+  --text-primary: #212121;         /* 主要文字（黑） */
+  --text-secondary: #757575;       /* 次要文字（中灰） */
+  --text-tertiary: #BDBDBD;        /* 辅助文字（浅灰） */
+  --text-white: #FFFFFF;           /* 白色文字（用于深色背景） */
+
+  /* 功能色 */
+  --success-color: #52C41A;        /* 成功绿 */
+  --success-light: #F6FFED;        /* 成功浅绿背景 */
+  --warning-color: #FAAD14;        /* 警告橙 */
+  --warning-light: #FFF1F0;        /* 警告浅橙背景 */
+  --danger-color: #FF4D4F;         /* 错误红 */
+  --danger-light: #FFF1F0;         /* 错误浅红背景 */
+  --info-color: #1890FF;           /* 信息蓝 */
+  --info-light: #E6F7FF;           /* 信息浅蓝背景 */
+
+  /* 圆角规范 */
+  --radius-small: 4px;      /* 小元素（Tag、Badge） */
+  --radius-medium: 8px;     /* 中等元素（按钮、输入框、卡片） */
+  --radius-large: 12px;     /* 大元素（Modal、大卡片） */
+  --radius-round: 999px;    /* 圆形元素（头像、Pill按钮） */
+
+  /* 阴影规范 */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);     /* 最小阴影（分割线替代） */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);     /* 小阴影（悬浮提示） */
+  --shadow-base: 0 2px 8px rgba(0, 0, 0, 0.08);   /* 基础阴影（卡片默认） */
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);    /* 中阴影（卡片hover） */
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);    /* 大阴影（弹窗、抽屉） */
+  --shadow-xl: 0 12px 40px rgba(0, 0, 0, 0.15);   /* 超大阴影（重要模态框） */
+  
+  /* 粉色装饰阴影（特殊元素） */
+  --shadow-pink: 0 4px 16px rgba(251, 114, 153, 0.25);  /* 粉色光晕 */
+  --shadow-pink-glow: 0 0 20px rgba(251, 114, 153, 0.4); /* 发光效果 */
+
+  /* 动画曲线 */
+  --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.2s ease;
+}
+
+/* 覆盖 Element Plus 主题色 */
+:root {
+  --el-color-primary: var(--primary-color);
+  --el-color-primary-light-3: #ff9ab7;
+  --el-color-primary-light-5: #ffb3c9;
+  --el-color-primary-light-7: #ffd1df;
+  --el-color-primary-light-8: #ffe0eb;
+  --el-color-primary-light-9: #fff0f5;
+  --el-color-primary-dark-2: var(--primary-dark);
+  
+  --el-color-success: var(--success-color);
+  --el-color-warning: var(--warning-color);
+  --el-color-danger: var(--danger-color);
+  --el-color-info: var(--info-color);
+  
+  --el-border-radius-base: var(--radius-medium);
+}
+
+/* 全局重置与基础样式 */
+body {
+  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background-color: var(--bg-gray-50);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ccc;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 通用工具类 */
+.card-hover {
+  transition: var(--transition-base);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.text-pink {
+  color: var(--primary-color);
+}
+
+.bg-pink-gradient {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+}
+
+.vip-gradient {
+  background: linear-gradient(135deg, #FFE5EE 0%, #FFF5F8 100%);
+}
