@@ -1,4 +1,0 @@
-Z:\大学Study\AAA毕业设计\基于AES加密的安全云盘系统\frontend 
-npm run dev
-Z:\大学Study\AAA毕业设计\基于AES加密的安全云盘系统\minio
-minio.exe server Z:\大学Study\AAA毕业设计\基于AES加密的安全云盘系统\minio\data --console-address ":9001"
